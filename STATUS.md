@@ -48,9 +48,25 @@
 - 새 git 저장소로 시작 (safeguard의 커밋 히스토리는 가져오지 않음)
 - 원격: `origin` → `https://github.com/selflesskr-design/DontTouchMyPhone.git`
 
+## Google Play Console 등록
+
+- 앱 생성: `Don't Touch My Phone` / `com.uniquelab.donttouchmyphone` (개발자 계정: Unique Fifties)
+- 스토어 등록정보: 앱 이름/설명, 아이콘(512x512), 피처 그래픽(1024x500), 스크린샷 3장(`store-assets/`, 루트 png 3개) 업로드 완료
+- 카테고리 도구(Tools), 연락처 unique.fifties@gmail.com
+- 개인정보처리방침: `privacy.html`을 GitHub Pages로 배포 (`https://selflesskr-design.github.io/DontTouchMyPhone/privacy.html`)
+  - Pages 활성화를 위해 저장소를 private → **public**으로 전환 (민감 정보 없음 확인 후 진행, debug.keystore는 표준 공개 키라 문제 없음)
+- 앱 콘텐츠 선언 11/11 완료: 로그인 없음, 광고 없음, 정부 앱 아님, 금융 기능 없음, 건강 기능 없음, 데이터 수집 없음(데이터 보안), 타겟층 13~15/16~17/18+, 콘텐츠 등급(IARC) 전 지역 전체이용가
+- 릴리스 서명: `debug.keystore`(공개 저장소에 커밋됨)를 업로드 서명키로 쓰지 않고, 별도 `android/app/release-upload.keystore` 생성(`android/keystore.properties`에 자격 증명, 둘 다 `.gitignore` 처리)
+- `targetSdkVersion`을 34 → **35**로 상향 (Play 콘솔이 신규 앱은 API 35 이상 요구)
+- `versionCode` 1 → **2** (targetSdk 34로 만든 첫 업로드가 거부되어 버전 코드 충돌)
+- **내부 테스트 트랙에 배포 완료** (0.1.0 - Initial release), 테스터: kimhyunkun@gmail.com, gimhyeongeon2@gmail.com
+  - 참여 링크: https://play.google.com/apps/internaltest/4701588191794600242
+- 프로덕션 출시는 아직 진행하지 않음 (사용자 확인 후 진행 예정)
+
 ## 현재 범위 제외
 
 - 원격 사운드(컨트롤러/리시버) 기능
 - BLE 태그 감지(가족 도착/아이 이탈) 기능
 - iOS 구현
 - 로그인, 서버, 클라우드 동기화
+- Google Play 프로덕션 출시
