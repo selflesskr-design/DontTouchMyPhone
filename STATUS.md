@@ -32,9 +32,16 @@
 - [x] release APK 실기기(폰1) adb 설치 및 실행 확인 (`adb install -r`, `adb shell am start`로 프로세스 기동 확인)
 - APK: `android/app/build/outputs/apk/release/app-release.apk` (약 64MB)
 
+## 기본 경보음
+
+- [x] `siren.mp3`를 `modules/phone-guard/android/src/main/assets/siren.mp3`로 번들링
+- [x] `PhoneGuardModule.requestPermissions()`에서 지킴 사운드가 없을 때만 번들 사이렌을 `guard_alarm_audio`로 복사해 자동 등록 (`ensureDefaultGuardSound`)
+- [x] 사용자가 직접 녹음하거나 파일을 가져오면 기존 방식대로 교체·삭제 가능, 자동 등록은 최초 1회만 개입
+- [x] 폰1 재설치 후 스크린샷으로 `Guard alarm sound: Siren / Imported audio file` 자동 표시 확인
+
 ## 실기기
 
-- 폰1: Galaxy S22 (`SM_S901N`, ADB `R5CT322AQVK`) — 연결 확인, release APK 설치·실행 완료
+- 폰1: Galaxy S22 (`SM_S901N`, ADB `R5CT322AQVK`) — 연결 확인, release APK(기본 사이렌 포함) 설치·실행 완료
 
 ## Git
 
