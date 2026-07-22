@@ -1,0 +1,31 @@
+# Dependencies and Expo state
+node_modules/
+.expo/
+.expo-shared/
+
+# Android build and machine-local files
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.apk
+*.aab
+
+# JavaScript and native build outputs
+dist/
+build/
+*.log
+
+# Editors and operating systems
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Claude Code local state
+.claude/

@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Don't Touch My Phone",
+    "slug": "donttouchmyphone",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "donttouchmyphone",
+    "userInterfaceStyle": "light",
+    "icon": "./logo.png",
+    "plugins": ["expo-dev-client"],
+    "android": {
+      "package": "com.uniquelab.donttouchmyphone",
+      "adaptiveIcon": {
+        "foregroundImage": "./logo.png",
+        "backgroundColor": "#FFF3E6"
+      },
+      "permissions": ["POST_NOTIFICATIONS", "RECORD_AUDIO", "FOREGROUND_SERVICE", "FOREGROUND_SERVICE_MEDIA_PLAYBACK"]
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "platforms": ["android"],
+  "android": {
+    "modules": ["com.uniquelab.donttouchmyphone.guard.PhoneGuardModule"]
+  }
+}

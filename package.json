@@ -1,0 +1,26 @@
+{
+  "name": "donttouchmyphone",
+  "version": "0.1.0",
+  "private": true,
+  "main": "expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "typecheck": "tsc --noEmit",
+    "prebuild": "expo prebuild --no-install",
+    "ios": "expo run:ios"
+  },
+  "dependencies": {
+    "expo": "~52.0.0",
+    "expo-asset": "~11.0.5",
+    "expo-dev-client": "~5.0.4",
+    "expo-status-bar": "~2.0.0",
+    "react": "18.3.1",
+    "react-native": "0.76.5"
+  },
+  "devDependencies": {
+    "@types/react": "~18.3.12",
+    "@types/react-native": "~0.73.0",
+    "typescript": "^5.3.3"
+  }
+}

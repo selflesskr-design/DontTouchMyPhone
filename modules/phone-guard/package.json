@@ -1,0 +1,8 @@
+{
+  "name": "@donttouchmyphone/phone-guard",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.ts",
+  "keywords": ["expo-module"],
+  "license": "MIT"
+}
