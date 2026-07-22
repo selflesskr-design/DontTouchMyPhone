@@ -68,10 +68,21 @@ class PhoneGuardModule : Module() {
   private fun hasPermission(permission: String) = Build.VERSION.SDK_INT < 23 || context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
 
   private fun requestPermissions() {
+    ensureDefaultGuardSound()
     val permissions = mutableListOf(Manifest.permission.RECORD_AUDIO)
     if (Build.VERSION.SDK_INT >= 33) permissions.add(Manifest.permission.POST_NOTIFICATIONS)
     val missing = permissions.filter { !hasPermission(it) }.toTypedArray()
     if (missing.isNotEmpty()) appContext.currentActivity?.requestPermissions(missing, 4201)
+  }
+
+  /** Provisions the bundled siren as the guard alarm sound until the user records or imports their own. */
+  private fun ensureDefaultGuardSound() {
+    if (guardSoundStore.hasSound()) return
+    runCatching {
+      val destination = guardSoundStore.selectedAudioFile()
+      context.assets.open("siren.mp3").use { input -> destination.outputStream().use { output -> input.copyTo(output) } }
+      guardSoundStore.save(destination, "file", "Siren")
+    }
   }
 
   private fun guardStatus() = mapOf(
