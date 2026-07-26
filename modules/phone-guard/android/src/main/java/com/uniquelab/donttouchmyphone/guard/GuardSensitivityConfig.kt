@@ -12,6 +12,6 @@ enum class GuardSensitivityConfig(
   HIGH(1.2f, 9f, 2.5f, 3, 300L);
 
   companion object {
-    fun from(value: String) = entries.firstOrNull { it.name == value.uppercase() } ?: NORMAL
+    fun from(value: String) = entries.firstOrNull { it.name == value.uppercase() } ?: HIGH
   }
 }

@@ -35,6 +35,8 @@ class PhoneGuardModule extends NativeModule<PhoneGuardEvents> {
   deleteGuardSound!: () => void;
   setGuardGuideAcknowledged!: (acknowledged: boolean) => void;
   setGuardSettings!: (sensitivity: string, delaySeconds: number) => void;
+  getLanguage!: () => string;
+  setLanguage!: (language: string) => void;
 }
 
 export default requireNativeModule<PhoneGuardModule>('PhoneGuard');

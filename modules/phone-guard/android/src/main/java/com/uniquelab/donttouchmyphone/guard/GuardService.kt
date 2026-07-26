@@ -91,7 +91,7 @@ class GuardService : Service(), SensorEventListener {
     super.onCreate()
     sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
     repository = GuardSoundRepository(this)
-    player = GuardAlarmPlayer { fail("Could not play the alarm sound.") }
+    player = GuardAlarmPlayer { fail("ALARM_PLAYBACK_FAILED") }
     accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
     createNotificationChannel()
   }
@@ -102,14 +102,14 @@ class GuardService : Service(), SensorEventListener {
       return START_NOT_STICKY
     }
     if (intent?.action != ACTION_START || state != "IDLE") return START_NOT_STICKY
-    if (!repository.hasSound()) { fail("Register a guard alarm sound first."); return START_NOT_STICKY }
-    if (accelerometer == null) { fail("Motion detection is not available on this phone."); return START_NOT_STICKY }
+    if (!repository.hasSound()) { fail("SOUND_MISSING"); return START_NOT_STICKY }
+    if (accelerometer == null) { fail("SENSOR_UNAVAILABLE"); return START_NOT_STICKY }
 
-    sensitivity = GuardSensitivityConfig.from(intent.getStringExtra(EXTRA_SENSITIVITY) ?: "NORMAL")
+    sensitivity = GuardSensitivityConfig.from(intent.getStringExtra(EXTRA_SENSITIVITY) ?: "HIGH")
     val delaySeconds = intent.getIntExtra(EXTRA_DELAY, 5).coerceIn(3, 10)
     repository.saveSettings(sensitivity.name, delaySeconds)
     startInForeground()
-    publish("ARMING", "Arming countdown started.", delaySeconds)
+    publish("ARMING", "ARMING_STARTED", delaySeconds)
     scheduleArming(delaySeconds)
     return START_NOT_STICKY
   }
@@ -131,13 +131,13 @@ class GuardService : Service(), SensorEventListener {
   }
 
   private fun beginCalibration() {
-    publish("CALIBRATING", "Calibrating the current position.", 0)
+    publish("CALIBRATING", "CALIBRATING_STARTED", 0)
     calibrationSamples = 0
     calibrationNoise = 0f
     calibrationSum.fill(0f)
     calibrationEndsAt = System.currentTimeMillis() + 1_500
     listenerRegistered = sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME)
-    if (!listenerRegistered) fail("Could not start the motion sensor.") else updateNotification()
+    if (!listenerRegistered) fail("SENSOR_START_FAILED") else updateNotification()
   }
 
   override fun onSensorChanged(event: SensorEvent) {
@@ -182,7 +182,7 @@ class GuardService : Service(), SensorEventListener {
   }
 
   private fun finishCalibration() {
-    if (calibrationSamples <= 0) { fail("Could not calibrate the current position."); return }
+    if (calibrationSamples <= 0) { fail("CALIBRATION_FAILED"); return }
     for (index in 0..2) {
       baseline[index] = calibrationSum[index] / calibrationSamples
       gravity[index] = baseline[index]
@@ -192,7 +192,7 @@ class GuardService : Service(), SensorEventListener {
     calibrationNoise = (calibrationNoise / calibrationSamples).coerceAtMost(1.2f)
     hasPrevious = true
     violationSamples = 0
-    publish("ARMED", "Watching for phone movement.")
+    publish("ARMED", "GUARD_ARMED")
     event("calibrated")
     updateNotification()
   }
@@ -200,9 +200,9 @@ class GuardService : Service(), SensorEventListener {
   private fun triggerAlarm() {
     if (state != "ARMED") return
     val path = repository.path()
-    if (path == null || !player.play(path, looping = true)) { fail("Could not play the alarm sound."); return }
+    if (path == null || !player.play(path, looping = true)) { fail("ALARM_PLAYBACK_FAILED"); return }
     repository.recordAlarmNow()
-    publish("ALARMING", "Motion detected.")
+    publish("ALARMING", "MOTION_DETECTED")
     event("motionDetected")
     event("alarmStarted")
     updateNotification()
@@ -225,8 +225,9 @@ class GuardService : Service(), SensorEventListener {
     state = "IDLE"
     countdown = 0
     event(if (wasAlarming) "alarmStopped" else eventType)
-    eventListener?.invoke("onGuardStateChanged", "Guard mode was turned off.", 0)
+    eventListener?.invoke("onGuardStateChanged", "GUARD_TURNED_OFF", 0)
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) stopForeground(STOP_FOREGROUND_REMOVE) else @Suppress("DEPRECATION") stopForeground(true)
+    GuardWidgetProvider.updateAll(this)
     stopSelf()
   }
 
@@ -252,25 +253,30 @@ class GuardService : Service(), SensorEventListener {
 
   private fun createNotificationChannel() {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-    val channel = NotificationChannel(CHANNEL_ID, "Phone Guard", NotificationManager.IMPORTANCE_LOW).apply {
-      description = "Shows the status of a guard session you started yourself."
+    val strings = localizedResources(this, repository.language())
+    val channel = NotificationChannel(CHANNEL_ID, strings.getString(R.string.notif_channel_name), NotificationManager.IMPORTANCE_LOW).apply {
+      description = strings.getString(R.string.notif_channel_desc)
       setSound(null, null)
       enableVibration(false)
     }
     getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
   }
 
-  private fun updateNotification() = getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, buildNotification())
+  private fun updateNotification() {
+    getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, buildNotification())
+    GuardWidgetProvider.updateAll(this)
+  }
 
   private fun buildNotification(): Notification {
     val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
     val contentIntent = launchIntent?.let { PendingIntent.getActivity(this, 0, it, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE) }
     val stopIntent = PendingIntent.getService(this, 2, Intent(this, GuardService::class.java).setAction(ACTION_STOP), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+    val strings = localizedResources(this, repository.language())
     val (title, text, action) = when (state) {
-      "ARMING" -> Triple("Preparing to guard", "Watching starts from the current position in ${countdown}s.", "Cancel")
-      "CALIBRATING" -> Triple("Calibrating guard mode", "Don't move the phone.", "Cancel")
-      "ALARMING" -> Triple("Motion detected", "The alarm is playing on repeat.", "Stop alarm")
-      else -> Triple("Guard mode is active", "Watching for phone movement.", "Turn off guard")
+      "ARMING" -> Triple(strings.getString(R.string.notif_arming_title), strings.getString(R.string.notif_arming_text, countdown), strings.getString(R.string.notif_action_cancel))
+      "CALIBRATING" -> Triple(strings.getString(R.string.notif_calibrating_title), strings.getString(R.string.notif_calibrating_text), strings.getString(R.string.notif_action_cancel))
+      "ALARMING" -> Triple(strings.getString(R.string.notif_alarming_title), strings.getString(R.string.notif_alarming_text), strings.getString(R.string.notif_action_stop_alarm))
+      else -> Triple(strings.getString(R.string.notif_armed_title), strings.getString(R.string.notif_armed_text), strings.getString(R.string.notif_action_turn_off))
     }
     val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) Notification.Builder(this, CHANNEL_ID) else @Suppress("DEPRECATION") Notification.Builder(this)
     return builder.setSmallIcon(android.R.drawable.ic_lock_idle_alarm).setContentTitle(title).setContentText(text)

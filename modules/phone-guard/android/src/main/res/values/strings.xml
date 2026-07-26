@@ -1,0 +1,20 @@
+<resources>
+  <string name="notif_channel_name">Phone Guard</string>
+  <string name="notif_channel_desc">Shows the status of a guard session you started yourself.</string>
+  <string name="notif_arming_title">Preparing to guard</string>
+  <string name="notif_arming_text">Watching starts from the current position in %1$ds.</string>
+  <string name="notif_calibrating_title">Calibrating guard mode</string>
+  <string name="notif_calibrating_text">Don\'t move the phone.</string>
+  <string name="notif_alarming_title">Motion detected</string>
+  <string name="notif_alarming_text">The alarm is playing on repeat.</string>
+  <string name="notif_armed_title">Guard mode is active</string>
+  <string name="notif_armed_text">Watching for phone movement.</string>
+  <string name="notif_action_cancel">Cancel</string>
+  <string name="notif_action_stop_alarm">Stop alarm</string>
+  <string name="notif_action_turn_off">Turn off guard</string>
+  <string name="widget_status_off">Off</string>
+  <string name="widget_turn_on">Tap to start guard</string>
+  <string name="widget_turn_off">Tap to turn off</string>
+  <string name="widget_description">Guard mode status and toggle</string>
+  <string name="widget_sound_missing">Open the app and register a guard alarm sound first.</string>
+</resources>

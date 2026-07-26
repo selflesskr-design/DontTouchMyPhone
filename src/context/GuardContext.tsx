@@ -34,7 +34,7 @@ export function GuardProvider({ children }: { children: React.ReactNode }) {
         setGuardStatus(PhoneGuard.getGuardStatus());
       }
       if (event.type === 'onGuardSoundChanged') setGuardSound(PhoneGuard.getGuardSoundInfo());
-      if (event.type === 'onGuardRecordingStateChanged') setGuardRecording(event.message === 'Recording started');
+      if (event.type === 'onGuardRecordingStateChanged') setGuardRecording(event.message === 'RECORDING_STARTED');
     });
     return () => { removeListener(); };
   }, []);

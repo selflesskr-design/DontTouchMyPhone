@@ -1,0 +1,20 @@
+<resources>
+  <string name="notif_channel_name">Guardián del teléfono</string>
+  <string name="notif_channel_desc">Muestra el estado de una sesión de vigilancia que tú mismo iniciaste.</string>
+  <string name="notif_arming_title">Preparando la vigilancia</string>
+  <string name="notif_arming_text">La vigilancia comenzará desde la posición actual en %1$ds.</string>
+  <string name="notif_calibrating_title">Calibrando el modo de vigilancia</string>
+  <string name="notif_calibrating_text">No muevas el teléfono.</string>
+  <string name="notif_alarming_title">Movimiento detectado</string>
+  <string name="notif_alarming_text">La alarma se está reproduciendo en bucle.</string>
+  <string name="notif_armed_title">El modo de vigilancia está activo</string>
+  <string name="notif_armed_text">Vigilando el movimiento del teléfono.</string>
+  <string name="notif_action_cancel">Cancelar</string>
+  <string name="notif_action_stop_alarm">Detener alarma</string>
+  <string name="notif_action_turn_off">Apagar vigilancia</string>
+  <string name="widget_status_off">Apagado</string>
+  <string name="widget_turn_on">Toca para activar</string>
+  <string name="widget_turn_off">Toca para apagar</string>
+  <string name="widget_description">Estado y control del modo de vigilancia</string>
+  <string name="widget_sound_missing">Abre la app y registra primero un sonido de alarma.</string>
+</resources>

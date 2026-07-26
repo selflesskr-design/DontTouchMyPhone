@@ -36,12 +36,16 @@ class GuardSoundRepository(private val context: Context) {
     preferences.edit().putString("sensitivity", sensitivity).putInt("arming_delay", delaySeconds).apply()
   }
 
-  fun sensitivity(): String = preferences.getString("sensitivity", null) ?: "NORMAL"
+  fun sensitivity(): String = preferences.getString("sensitivity", null) ?: "HIGH"
   fun armingDelay(): Int = preferences.getInt("arming_delay", 5).takeIf { it in setOf(3, 5, 10) } ?: 5
   fun lastAlarmAt(): Long = preferences.getLong("last_alarm_at", 0L)
   fun recordAlarmNow() = preferences.edit().putLong("last_alarm_at", System.currentTimeMillis()).apply()
   fun guideAcknowledged(): Boolean = preferences.getBoolean("guide_acknowledged", false)
   fun setGuideAcknowledged(value: Boolean) = preferences.edit().putBoolean("guide_acknowledged", value).apply()
+
+  /** "system" (follow device locale) or a supported language code such as "en", "ko", "es". */
+  fun language(): String = preferences.getString("language", null) ?: "system"
+  fun saveLanguage(value: String) = preferences.edit().putString("language", value).apply()
 
   private fun cleanTitle(value: String) = value.replace('\n', ' ').trim().take(40).ifBlank { "Guard alarm sound" }
 }

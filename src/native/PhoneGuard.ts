@@ -29,6 +29,8 @@ class PhoneGuardApi {
   deleteGuardSound() { NativePhoneGuard.deleteGuardSound(); }
   setGuardGuideAcknowledged(acknowledged: boolean) { NativePhoneGuard.setGuardGuideAcknowledged(acknowledged); }
   setGuardSettings(sensitivity: GuardSensitivity, delaySeconds: number) { NativePhoneGuard.setGuardSettings(sensitivity, delaySeconds); }
+  getLanguage(): string { return NativePhoneGuard.getLanguage(); }
+  setLanguage(language: string) { NativePhoneGuard.setLanguage(language); }
 }
 
 export const PhoneGuard = new PhoneGuardApi();

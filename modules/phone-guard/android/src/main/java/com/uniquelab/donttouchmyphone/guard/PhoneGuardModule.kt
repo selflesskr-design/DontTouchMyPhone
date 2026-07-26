@@ -21,7 +21,7 @@ class PhoneGuardModule : Module() {
   private val context get() = appContext.reactContext ?: throw IllegalStateException("React context unavailable")
   private val guardSoundStore by lazy { GuardSoundRepository(context) }
   private val guardPreviewPlayer by lazy {
-    GuardAlarmPlayer { emit("audioError", "Could not play the guard alarm sound.") }
+    GuardAlarmPlayer { emit("audioError", "AUDIO_PLAYBACK_ERROR") }
   }
   private val mainHandler = Handler(Looper.getMainLooper())
 
@@ -51,6 +51,8 @@ class PhoneGuardModule : Module() {
     Function("deleteGuardSound") { deleteGuardSound() }
     Function("setGuardGuideAcknowledged") { acknowledged: Boolean -> guardSoundStore.setGuideAcknowledged(acknowledged) }
     Function("setGuardSettings") { sensitivity: String, delaySeconds: Int -> guardSoundStore.saveSettings(GuardSensitivityConfig.from(sensitivity).name, delaySeconds) }
+    Function("getLanguage") { guardSoundStore.language() }
+    Function("setLanguage") { language: String -> guardSoundStore.saveLanguage(language) }
 
     OnActivityResult { _, payload ->
       if (payload.requestCode == PICK_GUARD_AUDIO_REQUEST) handlePickedGuardAudio(payload.resultCode, payload.data)
@@ -102,32 +104,32 @@ class PhoneGuardModule : Module() {
   )
 
   private fun startGuard(sensitivity: String, delaySeconds: Int) {
-    if (GuardService.isRunning()) { emit("serviceError", "Guard mode is already running."); return }
-    if (!guardSoundStore.hasSound()) { emit("soundMissing", "Register a guard alarm sound first."); return }
+    if (GuardService.isRunning()) { emit("serviceError", "GUARD_ALREADY_RUNNING"); return }
+    if (!guardSoundStore.hasSound()) { emit("soundMissing", "SOUND_MISSING"); return }
     if (Build.VERSION.SDK_INT >= 33 && !hasPermission(Manifest.permission.POST_NOTIFICATIONS)) {
       appContext.currentActivity?.requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 4204)
-      emit("serviceError", "Allow the notification permission and try again.")
+      emit("serviceError", "NOTIFICATION_PERMISSION_NEEDED")
       return
     }
-    if (mediaRecorder != null) { emit("serviceError", "Stop recording first."); return }
+    if (mediaRecorder != null) { emit("serviceError", "STOP_RECORDING_FIRST"); return }
     guardPreviewPlayer.stop()
     val supported = (context.getSystemService(android.content.Context.SENSOR_SERVICE) as android.hardware.SensorManager)
       .getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER) != null
-    if (!supported) { emit("sensorUnavailable", "Motion detection is not available on this phone."); return }
+    if (!supported) { emit("sensorUnavailable", "SENSOR_UNAVAILABLE"); return }
     runCatching { GuardService.start(context, GuardSensitivityConfig.from(sensitivity).name, delaySeconds) }
-      .onFailure { emit("serviceError", "Could not start guard mode. Please try again.") }
+      .onFailure { emit("serviceError", "GUARD_START_FAILED") }
   }
 
   private fun stopGuard() {
     guardPreviewPlayer.stop()
     runCatching { GuardService.requestStop(context) }
-      .onFailure { emit("serviceError", "Could not turn off guard mode.") }
+      .onFailure { emit("serviceError", "GUARD_STOP_FAILED") }
   }
 
   private fun pickGuardAudio() {
-    if (GuardService.isRunning()) { emit("serviceError", "Turn off guard mode before changing the sound."); return }
-    if (mediaRecorder != null) { emit("serviceError", "Stop recording first."); return }
-    val activity = appContext.currentActivity ?: run { emit("serviceError", "Reopen the screen and try again."); return }
+    if (GuardService.isRunning()) { emit("serviceError", "GUARD_ACTIVE_CANT_CHANGE_SOUND"); return }
+    if (mediaRecorder != null) { emit("serviceError", "STOP_RECORDING_FIRST"); return }
+    val activity = appContext.currentActivity ?: run { emit("serviceError", "ACTIVITY_UNAVAILABLE"); return }
     val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
       addCategory(Intent.CATEGORY_OPENABLE)
       type = "audio/*"
@@ -137,8 +139,8 @@ class PhoneGuardModule : Module() {
   }
 
   private fun handlePickedGuardAudio(resultCode: Int, data: Intent?) {
-    if (resultCode != Activity.RESULT_OK) { emit("onGuardSoundChanged", "Sound selection cancelled."); return }
-    val uri = data?.data ?: run { emit("audioError", "Could not open the selected file."); return }
+    if (resultCode != Activity.RESULT_OK) { emit("onGuardSoundChanged", "SOUND_SELECTION_CANCELLED"); return }
+    val uri = data?.data ?: run { emit("audioError", "FILE_OPEN_FAILED"); return }
     runCatching {
       val displayName = context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
         if (cursor.moveToFirst()) cursor.getString(0) else null
@@ -147,10 +149,10 @@ class PhoneGuardModule : Module() {
       context.contentResolver.openInputStream(uri)?.use { input -> destination.outputStream().use { output -> input.copyTo(output) } }
         ?: error("Selected file could not be opened")
       guardSoundStore.save(destination, "file", displayName.substringBeforeLast('.'))
-      emit("onGuardSoundChanged", "Guard alarm sound registered.")
+      emit("onGuardSoundChanged", "SOUND_REGISTERED")
     }.onFailure {
       runCatching { guardSoundStore.selectedAudioFile().delete() }
-      emit("audioError", "Could not import the audio file.")
+      emit("audioError", "AUDIO_IMPORT_FAILED")
     }
   }
 
@@ -158,13 +160,13 @@ class PhoneGuardModule : Module() {
   private fun newRecorder() = if (Build.VERSION.SDK_INT >= 31) MediaRecorder(context) else MediaRecorder()
 
   private fun startGuardSoundRecording() {
-    if (GuardService.isRunning()) { emit("serviceError", "Turn off guard mode before changing the sound."); return }
+    if (GuardService.isRunning()) { emit("serviceError", "GUARD_ACTIVE_CANT_CHANGE_SOUND"); return }
     if (!hasPermission(Manifest.permission.RECORD_AUDIO)) {
       appContext.currentActivity?.requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), 4203)
-      emit("audioError", "Allow the microphone permission and record again.")
+      emit("audioError", "MIC_PERMISSION_NEEDED")
       return
     }
-    if (mediaRecorder != null) { emit("audioError", "Another recording is already in progress."); return }
+    if (mediaRecorder != null) { emit("audioError", "RECORDING_IN_PROGRESS"); return }
     guardPreviewPlayer.stop()
     val output = guardSoundStore.recordingFile()
     runCatching {
@@ -180,14 +182,14 @@ class PhoneGuardModule : Module() {
       }
       guardRecording = true
       guardRecordingPath = output.absolutePath
-      emit("onGuardRecordingStateChanged", "Recording started")
+      emit("onGuardRecordingStateChanged", "RECORDING_STARTED")
     }.onFailure {
       runCatching { mediaRecorder?.release() }
       mediaRecorder = null
       guardRecording = false
       guardRecordingPath = null
       runCatching { output.delete() }
-      emit("audioError", "Could not start recording.")
+      emit("audioError", "RECORDING_START_FAILED")
     }
   }
 
@@ -202,26 +204,26 @@ class PhoneGuardModule : Module() {
     runCatching { recorder.release() }
     if (stopped && path != null) {
       guardSoundStore.save(File(path), "recording", "Recorded guard alarm sound")
-      emit("onGuardSoundChanged", "Recorded guard alarm sound saved.")
+      emit("onGuardSoundChanged", "SOUND_RECORDED_SAVED")
     } else {
       path?.let { runCatching { File(it).delete() } }
-      emit("audioError", "The recording was too short or could not be saved.")
+      emit("audioError", "RECORDING_TOO_SHORT")
     }
-    emit("onGuardRecordingStateChanged", "Recording stopped")
+    emit("onGuardRecordingStateChanged", "RECORDING_STOPPED")
   }
 
   private fun previewGuardSound() {
-    if (GuardService.isRunning()) { emit("serviceError", "Can't preview while guard mode is active."); return }
-    if (mediaRecorder != null) { emit("audioError", "Stop recording first."); return }
+    if (GuardService.isRunning()) { emit("serviceError", "GUARD_ACTIVE_CANT_PREVIEW"); return }
+    if (mediaRecorder != null) { emit("audioError", "STOP_RECORDING_FIRST"); return }
     val path = guardSoundStore.path()
-    if (path == null || !guardPreviewPlayer.play(path, looping = false)) emit("soundMissing", "Register a guard alarm sound first.")
+    if (path == null || !guardPreviewPlayer.play(path, looping = false)) emit("soundMissing", "SOUND_MISSING")
   }
 
   private fun deleteGuardSound() {
-    if (GuardService.isRunning()) { emit("serviceError", "Turn off guard mode before deleting the sound."); return }
+    if (GuardService.isRunning()) { emit("serviceError", "GUARD_ACTIVE_CANT_DELETE_SOUND"); return }
     guardPreviewPlayer.stop()
     guardSoundStore.delete()
-    emit("onGuardSoundChanged", "Guard alarm sound deleted.")
+    emit("onGuardSoundChanged", "SOUND_DELETED")
   }
 
   private fun cleanup() {

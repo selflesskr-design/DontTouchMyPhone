@@ -7,14 +7,23 @@
     "scheme": "donttouchmyphone",
     "userInterfaceStyle": "light",
     "icon": "./logo.png",
-    "plugins": ["expo-dev-client"],
+    "plugins": [
+      "expo-dev-client",
+      "expo-localization"
+    ],
     "android": {
       "package": "com.uniquelab.donttouchmyphone",
+      "versionCode": 3,
       "adaptiveIcon": {
         "foregroundImage": "./logo.png",
         "backgroundColor": "#FFF3E6"
       },
-      "permissions": ["POST_NOTIFICATIONS", "RECORD_AUDIO", "FOREGROUND_SERVICE", "FOREGROUND_SERVICE_MEDIA_PLAYBACK"]
+      "permissions": [
+        "POST_NOTIFICATIONS",
+        "RECORD_AUDIO",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ]
     }
   }
 }

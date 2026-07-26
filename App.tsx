@@ -1,17 +1,20 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaView, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { GuardProvider } from './src/context/GuardContext';
 import { GuardScreen } from './src/screens/GuardScreen';
 
 export default function App() {
   return (
-    <GuardProvider>
-      <SafeAreaView style={styles.safe}>
-        <StatusBar style="dark" />
-        <GuardScreen />
-      </SafeAreaView>
-    </GuardProvider>
+    <SafeAreaProvider>
+      <GuardProvider>
+        <SafeAreaView style={styles.safe}>
+          <StatusBar style="dark" />
+          <GuardScreen />
+        </SafeAreaView>
+      </GuardProvider>
+    </SafeAreaProvider>
   );
 }
 

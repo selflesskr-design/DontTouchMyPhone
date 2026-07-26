@@ -1,0 +1,20 @@
+<resources>
+  <string name="notif_channel_name">폰 지킴이</string>
+  <string name="notif_channel_desc">직접 시작한 지킴 세션의 상태를 표시합니다.</string>
+  <string name="notif_arming_title">지킴 모드 준비 중</string>
+  <string name="notif_arming_text">%1$d초 후 현재 위치를 기준으로 감시가 시작됩니다.</string>
+  <string name="notif_calibrating_title">지킴 모드 보정 중</string>
+  <string name="notif_calibrating_text">휴대폰을 움직이지 마세요.</string>
+  <string name="notif_alarming_title">움직임 감지됨</string>
+  <string name="notif_alarming_text">경보음이 반복 재생 중입니다.</string>
+  <string name="notif_armed_title">지킴 모드 작동 중</string>
+  <string name="notif_armed_text">휴대폰 움직임을 감시하고 있습니다.</string>
+  <string name="notif_action_cancel">취소</string>
+  <string name="notif_action_stop_alarm">경보 중지</string>
+  <string name="notif_action_turn_off">지킴 모드 끄기</string>
+  <string name="widget_status_off">꺼짐</string>
+  <string name="widget_turn_on">눌러서 지킴 시작</string>
+  <string name="widget_turn_off">눌러서 끄기</string>
+  <string name="widget_description">지킴 모드 상태 및 토글</string>
+  <string name="widget_sound_missing">앱을 열어 지킴 경보음을 먼저 등록해 주세요.</string>
+</resources>
