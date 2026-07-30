@@ -13,7 +13,7 @@
     ],
     "android": {
       "package": "com.uniquelab.donttouchmyphone",
-      "versionCode": 3,
+      "versionCode": 4,
       "adaptiveIcon": {
         "foregroundImage": "./logo.png",
         "backgroundColor": "#FFF3E6"
