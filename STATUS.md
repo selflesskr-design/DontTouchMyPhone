@@ -1,6 +1,6 @@
 # Don't Touch My Phone — 진행 상황
 
-최종 갱신: 2026-07-26
+최종 갱신: 2026-07-30
 
 ## 현재 결론
 
@@ -168,6 +168,24 @@
 - 애셋 패널의 "업로드"/"추가" 버튼이 Playwright의 기본 클릭으로는 사이드 토스트 메시지에 가려 클릭이 막히는 경우가 있었음 → `element.click()`을 JS로 직접 실행하는 방식으로 우회.
 - 새로 추가한 언어(한국어/스페인어)의 필드가 실제로는 입력이 됐는데도 "앱의 이름을 추가하세요" 같은 잔상 오류가 잠깐 표시되는 UI 버그가 있었음 — 다른 언어(예: 그래픽 이미지 애셋 추가) 작업을 하나 더 진행하면 자연히 사라짐. 저장이 안 되면 당황하지 말고 다른 필드를 한 번 더 건드려볼 것.
 - 스크린샷 섹션에서 미리보기로 표시되는 "상속된 기본 언어 스크린샷"은 삭제 버튼을 눌러도 반응이 없음(해당 언어 소유의 애셋이 아니라서) — 그냥 새 애셋을 추가하면 자동으로 그 언어 전용 스크린샷으로 교체됨.
+
+## 2026-07-30 — API 36 타겟팅 + 16KB 페이지 크기 대응 (v4 제출 완료)
+
+Play Console 정책 알림("2026-08-31까지 API 36 타겟팅 필요")에 대응. 단순 숫자 변경으로 끝나지 않고 예상보다 큰 작업이 됨.
+
+- [x] **GitHub 백업**: 그동안 로컬에만 있던 커밋되지 않은 변경사항(홈 화면 위젯, 다국어 UI/네이티브 문자열, 레이아웃 수정 등 37개 파일) 커밋 후 푸시 (`b0c9e89`). 마케팅용 `.mp4`/`.jpg`(유튜브에 이미 업로드됨)는 의도적으로 제외.
+  - 푸시 시 403 에러 발생 → 원인은 Windows 자격 증명 관리자에 `git:https://github.com` 타겟으로 저장된 다른 계정(`uniquelab-01`)의 캐시된 자격 증명이었음. `cmdkey /delete:"LegacyGeneric:target=git:https://github.com"`로 해당 자격 증명만 삭제 후 재시도하여 해결.
+- [x] **유튜브 쇼츠 3개 언어 예약 업로드**: `dtmp_en.mp4`(기존 `boqI3YcRpiQ`), `dtmp_kr.mp4`(신규 `FPtLl_Y4j6o`), `dtmp_espa.mp4`(신규 `I9LQvpw1nUc`) 모두 2026-07-31 04:00(KST)에 동시 공개되도록 예약. 제목/설명/해시태그는 검색 노출(SEO)을 고려해 언어별로 작성(브랜드명 "Don't Touch My Phone"은 전 언어 동일 유지, 도난방지/antirrobo 등 로컬 키워드 포함).
+- [x] **targetSdk/compileSdk 35 → 36**: `android/gradle.properties`에 `android.compileSdkVersion=36`, `android.buildToolsVersion=36.0.0` 추가, `targetSdkVersion=36`으로 변경. 로컬에 SDK Platform 36/36.1, build-tools 36·37 이미 설치돼 있어 별도 다운로드 없이 `assembleRelease` 성공 (`deb739c`).
+- [x] **16KB 메모리 페이지 크기 미지원 발견**: Play Console 릴리스 검토 단계에서 "오류 1개 — 앱이 16KB 메모리 페이지 크기를 지원하지 않습니다"로 저장이 막힘. `llvm-readelf -l`로 확인한 결과 `libhermes.so`/`libreactnative.so`/`libfbjni.so`/`libexpo-modules-core.so`의 LOAD 세그먼트 정렬이 전부 `0x1000`(4KB)이었음 — React Native 0.76.x가 배포하는 prebuilt 네이티브 라이브러리 자체의 문제.
+  - React Native 0.76.9(최신 0.76 패치)로도 미해결 확인.
+  - Maven Central에서 `hermes-android`/`react-android` AAR을 버전별로 직접 받아 `llvm-readelf`로 비교한 결과 **React Native 0.77.3부터 16KB 정렬(`0x4000`)로 수정**된 것을 확인.
+  - Expo SDK 53(React Native 0.79.6, 공식 매칭 조합, `bundledNativeModules.json`으로 버전 확인)으로 업그레이드하여 해결. `react` 18.3.1 → 19.0.0, `react-native-safe-area-context` 4.12.0 → 5.4.0, `expo-*` 패키지 전부 SDK 53 고정 버전으로 교체. `android/build.gradle`의 Kotlin(1.9.25→2.0.21)·NDK(26.1.10909125→27.1.12297006)도 새 `react-native-gradle-plugin` 요구사항에 맞춰 수동 조정.
+  - **`expo prebuild`는 실행하지 않음** — 위젯 등록 등 `android/app/src/main/AndroidManifest.xml`에 직접 손으로 추가한 내용이 있어서, prebuild 재생성 시 유실 위험이 있었기 때문. 순수 npm 패키지 버전 업그레이드 + gradle 설정 수동 조정만으로 진행, `git status`로 `android/app`·`modules/` 하위 파일이 전혀 건드려지지 않았음을 확인 (`0fbafc1`).
+  - 업그레이드 후 `libhermes.so`/`libreactnative.so`/`libfbjni.so` 전부 `0x4000` 정렬 확인.
+- [x] **versionCode 4 → 5**: 16KB 에러로 막혔던 versionCode 4 업로드 시도가 Play Console에 "사용된 버전 코드"로 이미 등록되어(실제 게시는 안 됐음에도) 재사용 불가 → 5로 올려서 재빌드 (`4036a62`).
+- [x] **v4(versionCode 5, API 36) Play Console 제출 완료**: 프로덕션 트랙에 새 버전 생성 → AAB 업로드(16KB 정렬 확인됨, R8 매핑 파일 없음 경고만 있고 차단 오류 없음) → 출시 노트(EN/ES/KO) 작성 → 게시 개요에서 검토를 위해 전송 → "검토 중인 변경사항" 상태로 전환 확인.
+- [ ] **실기기 스모크 테스트 미실시**: 연결된 Android 기기/에뮬레이터가 없어 컴파일 성공·타입체크 통과·16KB 정렬 확인까지만 검증. 위젯/지킴 모드 등 실제 동작 확인은 심사 승인 후 실기기에서 확인 필요.
 
 ## 현재 범위 제외
 
